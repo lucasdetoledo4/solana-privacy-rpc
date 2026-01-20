@@ -1,0 +1,129 @@
+# Solana Privacy RPC Layer - AI Coding Guidelines
+
+This file provides context and standards for AI coding assistants (Claude Code, Cursor, etc.) working on this project.
+
+---
+
+## PROJECT OVERVIEW
+
+### What We're Building
+A three-layer privacy infrastructure providing k-anonymity for Solana RPC queries:
+- Layer 1 (TypeScript): Client SDK - drop-in replacement for @solana/web3.js
+- Layer 2 (Rust): On-chain coordinator - Anchor program managing batches
+- Layer 3 (Rust): RPC proxy - Axum server executing batches via QuickNode
+
+### Privacy Mechanism
+Batch queries from multiple users together so individual queries are indistinguishable (k-anonymity). Each query mixed with >=k-1 others before hitting QuickNode RPC.
+
+### Target Audience
+- Primary: Solana developers who want privacy-preserving RPC access
+- Secondary: QuickNode hackathon judges evaluating technical merit
+- Tertiary: Potential employers reviewing code quality
+
+---
+
+## MILESTONE STRATEGY
+
+### Current Focus: Milestone 1 (15h)
+Build: TypeScript SDK + Rust Proxy + Basic Example
+Goal: Working end-to-end privacy RPC with client-side batching
+Submittable: YES - This is a complete, functional product
+
+### Future Milestones
+- M2 (15h): Add Anchor on-chain coordinator for trustless batching
+- M3 (10h): Extend to support 8+ RPC methods
+- M4 (10h): Production polish (optimization, docs, video)
+
+### Critical Rule
+DO NOT start next milestone until current milestone is:
+- Fully functional (all features working)
+- Well tested (>70% coverage if possible)
+- Properly documented (README updated)
+- Could be submitted as-is to hackathon
+
+---
+
+## RUST CODING STANDARDS
+
+### General Principles
+- Production quality over hackathon shortcuts
+- Explicit is better than clever
+- Error messages should guide debugging
+- Comments explain WHY, not WHAT
+- Performance matters, but correctness first
+
+### Code Organization
+```
+src/
+├── main.rs        # Entry point only - minimal logic
+├── server.rs      # HTTP server setup and routing
+├── types.rs       # All structs with Serialize/Deserialize
+├── error.rs       # Centralized error handling with thiserror
+└── batch_executor.rs  # Core business logic
+```
+
+### Error Handling
+- Use `thiserror` for custom errors
+- NEVER unwrap() in production code paths
+- ALWAYS provide context in error messages
+- Prefer `Result<T, E>` over panics
+- Implement `IntoResponse` for Axum errors
+
+### Logging
+- Use `tracing` crate (not `log`)
+- Levels: error (bugs), warn (recoverable), info (milestones), debug (verbose)
+- Include context in log messages
+
+---
+
+## TYPESCRIPT CODING STANDARDS
+
+### General Principles
+- Strict TypeScript - no `any` unless absolutely necessary
+- Functional style preferred over classes (except main Connection)
+- Immutability by default
+- Clear, descriptive variable names
+
+### Type Safety
+- Enable `strict` mode in tsconfig.json
+- Explicit return types on all public functions
+- Use `readonly` for immutable properties
+- Prefer `interface` over `type` for objects
+
+### Error Handling
+- Throw Error objects, not strings
+- Use custom Error classes for specific cases
+- ALWAYS provide helpful error messages
+
+---
+
+## TESTING STRATEGY
+
+### Unit Tests
+- Test each public function independently
+- Test error paths, not just happy paths
+- Use descriptive test names
+
+### Manual Testing
+```bash
+# 1. Start Solana test validator
+solana-test-validator
+
+# 2. Start Rust proxy
+QUICKNODE_RPC_URL=http://localhost:8899 cargo run
+
+# 3. Run example
+cd examples/basic-usage && npm start
+```
+
+---
+
+## QUALITY BAR
+
+Every file should be:
+- Professional enough to show in interview
+- Documented enough for stranger to use
+- Tested enough to deploy with confidence
+- Clean enough to maintain long-term
+
+**Remember: Quality over quantity. A polished Milestone 1 beats a rushed Milestone 3.**
