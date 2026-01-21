@@ -53,3 +53,10 @@ export {
   hashBatch,
   verifyBatchHash,
 } from "./utils";
+
+// Coordinator exports (on-chain)
+export {
+  CoordinatorClient,
+  PROGRAM_ID as COORDINATOR_PROGRAM_ID,
+} from "./coordinator";
+export type { BatchAccount, CoordinatorState } from "./coordinator";

@@ -3,6 +3,7 @@
 //! This is the main entry point for the privacy-preserving RPC proxy.
 //! It initializes logging, loads configuration, and starts the HTTP server.
 
+mod coordinator;
 mod enums;
 mod error;
 mod executor;
@@ -34,7 +35,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .parse()
         .expect("PORT must be a valid number");
 
-    let config = ProxyConfig::new(rpc_url.clone()).with_port(port);
+    let enable_poller = env::var("ENABLE_POLLER")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
+
+    let poll_interval_ms: u64 = env::var("POLL_INTERVAL_MS")
+        .unwrap_or_else(|_| "5000".to_string())
+        .parse()
+        .unwrap_or(5000);
+
+    let mut config = ProxyConfig::new(rpc_url.clone()).with_port(port);
+    if enable_poller {
+        config = config.with_poller(poll_interval_ms);
+    }
 
     // Log startup info (without exposing full RPC URL credentials)
     let sanitized_url = sanitize_rpc_url(&rpc_url);

@@ -23,6 +23,12 @@ pub struct ProxyConfig {
 
     /// Maximum batch size
     pub max_batch_size: usize,
+
+    /// Enable on-chain batch poller
+    pub enable_poller: bool,
+
+    /// Poll interval in milliseconds
+    pub poll_interval_ms: Option<u64>,
 }
 
 impl ProxyConfig {
@@ -33,6 +39,8 @@ impl ProxyConfig {
             port: DEFAULT_PORT,
             k_anonymity: DEFAULT_K_ANONYMITY,
             max_batch_size: MAX_BATCH_SIZE,
+            enable_poller: false,
+            poll_interval_ms: None,
         }
     }
 
@@ -47,6 +55,13 @@ impl ProxyConfig {
         self.k_anonymity = k;
         self
     }
+
+    /// Enable the on-chain batch poller
+    pub fn with_poller(mut self, interval_ms: u64) -> Self {
+        self.enable_poller = true;
+        self.poll_interval_ms = Some(interval_ms);
+        self
+    }
 }
 
 impl Default for ProxyConfig {
@@ -56,6 +71,8 @@ impl Default for ProxyConfig {
             port: DEFAULT_PORT,
             k_anonymity: DEFAULT_K_ANONYMITY,
             max_batch_size: MAX_BATCH_SIZE,
+            enable_poller: false,
+            poll_interval_ms: None,
         }
     }
 }

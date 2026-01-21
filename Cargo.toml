@@ -34,3 +34,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Utilities
 sha2 = "0.10"
 base58 = "0.2"
+hex = "0.4"
