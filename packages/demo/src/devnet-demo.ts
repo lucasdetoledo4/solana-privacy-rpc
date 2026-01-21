@@ -5,7 +5,21 @@ import { OnChainBatchManager, RpcMethod, CoordinatorClient } from "@privacy-rpc/
 import * as fs from "fs";
 import * as path from "path";
 
-const DEVNET_URL = "https://api.devnet.solana.com";
+// Use custom RPC if provided, fallback to public devnet
+const DEVNET_URL = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
+
+async function retry<T>(fn: () => Promise<T>, retries = 3, delay = 2000): Promise<T> {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (i === retries - 1) throw error;
+            console.log(chalk.dim(`     Retry ${i + 1}/${retries} after network error...`));
+            await new Promise((r) => setTimeout(r, delay));
+        }
+    }
+    throw new Error("Retry failed");
+}
 
 function loadWallet(): Keypair {
     // Try loading from default Solana CLI keyfile first
@@ -79,9 +93,17 @@ export async function runDevnetDemo(proxyUrl: string) {
         chalk.dim(`     Source: ${isPreloaded ? "pre-funded wallet" : "generated (needs airdrop)"}`)
     );
 
-    // Check balance
-    const balance = await connection.getBalance(wallet.publicKey);
-    console.log(chalk.dim(`     Balance: ${(balance / LAMPORTS_PER_SOL).toFixed(4)} SOL`));
+    // Check balance with retry
+    let balance: number;
+    try {
+        balance = await retry(() => connection.getBalance(wallet.publicKey));
+        console.log(chalk.dim(`     Balance: ${(balance / LAMPORTS_PER_SOL).toFixed(4)} SOL`));
+    } catch (error) {
+        console.log(chalk.red("     Failed to connect to devnet after retries."));
+        console.log(chalk.yellow("     Devnet may be experiencing issues. Try again later.\n"));
+        printDevnetFlow();
+        return;
+    }
 
     if (balance < 0.01 * LAMPORTS_PER_SOL) {
         // Request airdrop if balance is low
@@ -121,7 +143,14 @@ export async function runDevnetDemo(proxyUrl: string) {
     printStep(2, totalSteps, "Checking on-chain coordinator");
 
     const coordinator = new CoordinatorClient(connection);
-    const state = await coordinator.getCoordinatorState();
+    let state;
+    try {
+        state = await retry(() => coordinator.getCoordinatorState());
+    } catch (error) {
+        console.log(chalk.red("     Failed to fetch coordinator state."));
+        printDevnetFlow();
+        return;
+    }
 
     if (!state) {
         console.log(chalk.yellow("     Coordinator not initialized on devnet."));

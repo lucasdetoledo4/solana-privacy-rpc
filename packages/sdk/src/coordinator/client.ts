@@ -154,8 +154,8 @@ export class CoordinatorClient {
         const [coordinatorState] = this.getCoordinatorStatePda();
         const [batch] = this.getBatchPda(batchId);
 
-        // Instruction discriminator for create_batch (anchor sighash)
-        const discriminator = Buffer.from([251, 20, 5, 66, 184, 108, 64, 220]);
+        // Instruction discriminator for create_batch: sha256("global:create_batch")[0..8]
+        const discriminator = Buffer.from([159, 198, 248, 43, 248, 31, 235, 86]);
 
         return new TransactionInstruction({
             keys: [
