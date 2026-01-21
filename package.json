@@ -1,0 +1,16 @@
+{
+  "name": "solana-privacy-rpc",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/sdk",
+    "packages/demo"
+  ],
+  "scripts": {
+    "build": "yarn workspaces run build",
+    "test": "yarn workspaces run test",
+    "demo": "yarn workspace @privacy-rpc/demo dev",
+    "demo:local": "yarn workspace @privacy-rpc/demo demo:local",
+    "demo:explain": "yarn workspace @privacy-rpc/demo dev explain"
+  }
+}
