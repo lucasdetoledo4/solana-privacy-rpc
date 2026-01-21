@@ -38,19 +38,13 @@ export class CoordinatorClient {
     }
 
     getCoordinatorStatePda(): [PublicKey, number] {
-        return PublicKey.findProgramAddressSync(
-            [Buffer.from("coordinator")],
-            this.programId
-        );
+        return PublicKey.findProgramAddressSync([Buffer.from("coordinator")], this.programId);
     }
 
     getBatchPda(batchId: bigint): [PublicKey, number] {
         const buffer = Buffer.alloc(8);
         buffer.writeBigUInt64LE(batchId);
-        return PublicKey.findProgramAddressSync(
-            [Buffer.from("batch"), buffer],
-            this.programId
-        );
+        return PublicKey.findProgramAddressSync([Buffer.from("batch"), buffer], this.programId);
     }
 
     async getCoordinatorState(): Promise<CoordinatorState | null> {
@@ -156,10 +150,7 @@ export class CoordinatorClient {
         return finalized;
     }
 
-    createBatchInstruction(
-        batchId: bigint,
-        payer: PublicKey
-    ): TransactionInstruction {
+    createBatchInstruction(batchId: bigint, payer: PublicKey): TransactionInstruction {
         const [coordinatorState] = this.getCoordinatorStatePda();
         const [batch] = this.getBatchPda(batchId);
 

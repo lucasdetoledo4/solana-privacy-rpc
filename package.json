@@ -9,8 +9,13 @@
   "scripts": {
     "build": "yarn workspaces run build",
     "test": "yarn workspaces run test",
+    "format": "prettier --write \"**/*.{ts,js}\"",
+    "format:check": "prettier --check \"**/*.{ts,js}\"",
     "demo": "yarn workspace @privacy-rpc/demo dev",
     "demo:local": "yarn workspace @privacy-rpc/demo demo:local",
     "demo:explain": "yarn workspace @privacy-rpc/demo dev explain"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.0"
   }
 }

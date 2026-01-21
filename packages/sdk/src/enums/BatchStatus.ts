@@ -3,15 +3,15 @@
  */
 export enum BatchStatus {
     /** Batch is waiting for more queries */
-    Pending = 'pending',
+    Pending = "pending",
     /** Batch is currently being executed */
-    Executing = 'executing',
+    Executing = "executing",
     /** Batch execution completed successfully */
-    Completed = 'completed',
+    Completed = "completed",
     /** Batch execution failed */
-    Failed = 'failed',
+    Failed = "failed",
     /** Batch was cancelled */
-    Cancelled = 'cancelled',
+    Cancelled = "cancelled",
 }
 
 /**

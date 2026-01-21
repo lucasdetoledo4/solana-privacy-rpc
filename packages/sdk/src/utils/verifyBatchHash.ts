@@ -14,10 +14,7 @@ import { hashBatch } from "./hashBatch";
  * @param expectedHash - The expected batch hash
  * @returns True if the batch matches the expected hash
  */
-export function verifyBatchHash(
-    queries: Query[],
-    expectedHash: string
-): boolean {
+export function verifyBatchHash(queries: Query[], expectedHash: string): boolean {
     const actualHash = hashBatch(queries);
     return actualHash === expectedHash;
 }

@@ -2,7 +2,7 @@
  * Response types for the Privacy RPC SDK
  */
 
-import { Query } from './query';
+import { Query } from "./query";
 
 /**
  * Result of a single query execution
@@ -61,10 +61,7 @@ export interface BatchResponse {
 /**
  * Create a batch request from queries
  */
-export function createBatchRequest(
-    queries: Query[],
-    batchHash?: string
-): BatchRequest {
+export function createBatchRequest(queries: Query[], batchHash?: string): BatchRequest {
     return {
         queries,
         batchHash,

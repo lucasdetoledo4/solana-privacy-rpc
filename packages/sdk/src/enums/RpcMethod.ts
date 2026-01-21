@@ -2,8 +2,8 @@
  * Supported RPC methods for privacy batching
  */
 export enum RpcMethod {
-    GetBalance = 'getBalance',
-    GetAccountInfo = 'getAccountInfo',
+    GetBalance = "getBalance",
+    GetAccountInfo = "getAccountInfo",
 }
 
 /**

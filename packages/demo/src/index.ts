@@ -1,17 +1,11 @@
-#!/usr/bin/env node
-
 import { Command } from "commander";
 import chalk from "chalk";
-import ora from "ora";
 import { runLocalDemo } from "./local-demo";
 import { runDevnetDemo } from "./devnet-demo";
 
 const program = new Command();
 
-program
-    .name("privacy-demo")
-    .description("Demo CLI for Solana Privacy RPC Layer")
-    .version("0.1.0");
+program.name("privacy-demo").description("Demo CLI for Solana Privacy RPC Layer").version("0.1.0");
 
 program
     .command("local")
@@ -48,14 +42,16 @@ program.action(() => {
 });
 
 function printBanner() {
-    console.log(chalk.cyan(`
+    console.log(
+        chalk.cyan(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ${chalk.bold("Solana Privacy RPC Layer")}                                 ║
-║   ${chalk.dim("K-Anonymity for Blockchain Queries")}                        ║
+║   ${chalk.bold("Solana Privacy RPC Layer")}                   ║
+║   ${chalk.dim("K-Anonymity for Blockchain Queries")}          ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
-`));
+`)
+    );
 }
 
 function printExplanation() {
@@ -92,7 +88,9 @@ function printExplanation() {
     console.log(chalk.dim("  Your query is hidden among K-1 other queries.\n"));
 
     console.log(chalk.cyan("────────────────────────────────────────────────────────────\n"));
-    console.log(chalk.dim("Run ") + chalk.white("privacy-demo local") + chalk.dim(" to see it in action!\n"));
+    console.log(
+        chalk.dim("Run ") + chalk.white("privacy-demo local") + chalk.dim(" to see it in action!\n")
+    );
 }
 
 program.parse();

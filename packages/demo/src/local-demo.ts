@@ -24,12 +24,14 @@ function printSubStep(message: string) {
 }
 
 export async function runLocalDemo(proxyUrl: string, queryCount: number) {
-    console.log(chalk.cyan(`
+    console.log(
+        chalk.cyan(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                     ${chalk.bold("LOCAL DEMO MODE")}                           ║
 ║          Demonstrating K-Anonymity Batch Privacy               ║
 ╚═══════════════════════════════════════════════════════════════╝
-`));
+`)
+    );
 
     console.log(chalk.dim("Configuration:"));
     console.log(chalk.dim(`  Proxy URL: ${proxyUrl}`));
@@ -69,22 +71,32 @@ export async function runLocalDemo(proxyUrl: string, queryCount: number) {
         queries.push({ name: wallet.name, pubkey: wallet.pubkey, hash });
 
         console.log(chalk.yellow(`     User ${i + 1}: `) + chalk.white(wallet.name));
-        console.log(chalk.dim(`            Wallet: ${wallet.pubkey.slice(0, 8)}...${wallet.pubkey.slice(-8)}`));
+        console.log(
+            chalk.dim(
+                `            Wallet: ${wallet.pubkey.slice(0, 8)}...${wallet.pubkey.slice(-8)}`
+            )
+        );
         console.log(chalk.dim(`            Hash:   ${hash.slice(0, 16)}...`));
     }
 
     // Step 3: Show batch formation
     printStep(3, totalSteps, "Batch formed with k=" + queryCount + " queries");
 
-    const batchHash = hashBatch(queries.map((q, i) => ({
-        id: `query-${i}`,
-        method: RpcMethod.GetBalance,
-        pubkey: q.pubkey,
-    })));
+    const batchHash = hashBatch(
+        queries.map((q, i) => ({
+            id: `query-${i}`,
+            method: RpcMethod.GetBalance,
+            pubkey: q.pubkey,
+        }))
+    );
 
     console.log(chalk.dim("\n     On-chain batch would contain:\n"));
     console.log(chalk.cyan("     ┌─────────────────────────────────────────────────────┐"));
-    console.log(chalk.cyan("     │ ") + chalk.bold("Batch Hashes (what observers see)") + chalk.cyan("               │"));
+    console.log(
+        chalk.cyan("     │ ") +
+            chalk.bold("Batch Hashes (what observers see)") +
+            chalk.cyan("               │")
+    );
     console.log(chalk.cyan("     ├─────────────────────────────────────────────────────┤"));
 
     for (const q of queries) {
@@ -106,9 +118,15 @@ export async function runLocalDemo(proxyUrl: string, queryCount: number) {
     try {
         // Create promises for all queries
         const promises = queries.map((q, i) =>
-            batchManager.addQuery<number>(RpcMethod.GetBalance, q.pubkey)
+            batchManager
+                .addQuery<number>(RpcMethod.GetBalance, q.pubkey)
                 .then((balance) => ({ name: q.name, pubkey: q.pubkey, balance, error: null }))
-                .catch((err) => ({ name: q.name, pubkey: q.pubkey, balance: 0, error: err.message }))
+                .catch((err) => ({
+                    name: q.name,
+                    pubkey: q.pubkey,
+                    balance: 0,
+                    error: err.message,
+                }))
         );
 
         // Wait for batch to execute
@@ -126,13 +144,17 @@ export async function runLocalDemo(proxyUrl: string, queryCount: number) {
                 console.log(chalk.red(`     ✗ ${result.name}: Error - ${result.error}`));
             } else {
                 const solBalance = result.balance / 1e9;
-                console.log(chalk.green(`     ✓ ${result.name}: `) + chalk.white(`${solBalance.toFixed(4)} SOL`));
+                console.log(
+                    chalk.green(`     ✓ ${result.name}: `) +
+                        chalk.white(`${solBalance.toFixed(4)} SOL`)
+                );
             }
         }
-
     } catch (error) {
         spinner.fail("Batch execution failed");
-        console.log(chalk.red(`\n     Error: ${error instanceof Error ? error.message : "Unknown error"}`));
+        console.log(
+            chalk.red(`\n     Error: ${error instanceof Error ? error.message : "Unknown error"}`)
+        );
         console.log(chalk.yellow("\n     Make sure the proxy is running:"));
         console.log(chalk.dim("     QUICKNODE_RPC_URL=<your-rpc-url> cargo run\n"));
         return;

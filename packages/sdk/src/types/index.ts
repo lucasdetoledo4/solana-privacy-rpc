@@ -10,23 +10,13 @@ export {
     DEFAULT_BATCH_SIZE,
     DEFAULT_MAX_WAIT_TIME,
     DEFAULT_TIMEOUT,
-} from './config';
+} from "./config";
 
 // Query types
-export { Query, PendingQuery, createQuery } from './query';
+export { Query, PendingQuery, createQuery } from "./query";
 
 // Response types
-export {
-    QueryResult,
-    BatchRequest,
-    BatchResponse,
-    createBatchRequest,
-} from './response';
+export { QueryResult, BatchRequest, BatchResponse, createBatchRequest } from "./response";
 
 // Result types
-export {
-    AccountInfoResult,
-    BalanceResult,
-    isAccountInfoResult,
-    isBalanceResult,
-} from './result';
+export { AccountInfoResult, BalanceResult, isAccountInfoResult, isBalanceResult } from "./result";

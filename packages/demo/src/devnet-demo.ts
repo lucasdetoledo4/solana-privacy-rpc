@@ -11,21 +11,19 @@ const DEMO_WALLETS = [
     { name: "Wallet B", pubkey: "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG" },
 ];
 
-function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function printStep(step: number, total: number, message: string) {
     console.log(chalk.cyan(`\n[${step}/${total}] `) + chalk.white(message));
 }
 
 export async function runDevnetDemo(proxyUrl: string) {
-    console.log(chalk.cyan(`
+    console.log(
+        chalk.cyan(`
 ╔═══════════════════════════════════════════════════════════════╗
-║                    ${chalk.bold("DEVNET DEMO MODE")}                          ║
-║         Full On-Chain Coordination with Solana Devnet          ║
+║                    ${chalk.bold("DEVNET DEMO MODE")}          ║
+║         Full On-Chain Coordination with Solana Devnet         ║
 ╚═══════════════════════════════════════════════════════════════╝
-`));
+`)
+    );
 
     console.log(chalk.yellow("⚠ Note: This mode requires:"));
     console.log(chalk.dim("  1. Coordinator program deployed to devnet"));
@@ -69,7 +67,11 @@ export async function runDevnetDemo(proxyUrl: string) {
 
     if (!state) {
         console.log(chalk.yellow("     Coordinator not initialized on devnet."));
-        console.log(chalk.dim("     Deploy with: cd packages/coordinator && anchor deploy --provider.cluster devnet\n"));
+        console.log(
+            chalk.dim(
+                "     Deploy with: cd packages/coordinator && anchor deploy --provider.cluster devnet\n"
+            )
+        );
         printDevnetFlow();
         return;
     }
@@ -121,11 +123,14 @@ export async function runDevnetDemo(proxyUrl: string) {
         printStep(6, totalSteps, "Result received");
 
         const solBalance = balance / LAMPORTS_PER_SOL;
-        console.log(chalk.green(`\n     ✓ ${targetWallet.name} balance: ${solBalance.toFixed(4)} SOL\n`));
-
+        console.log(
+            chalk.green(`\n     ✓ ${targetWallet.name} balance: ${solBalance.toFixed(4)} SOL\n`)
+        );
     } catch (error) {
         querySpinner.fail("Query failed");
-        console.log(chalk.red(`     Error: ${error instanceof Error ? error.message : "Unknown"}\n`));
+        console.log(
+            chalk.red(`     Error: ${error instanceof Error ? error.message : "Unknown"}\n`)
+        );
     }
 
     // Summary

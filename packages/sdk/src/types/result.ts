@@ -34,14 +34,14 @@ export interface BalanceResult {
  * Type guard for AccountInfoResult
  */
 export function isAccountInfoResult(value: unknown): value is AccountInfoResult {
-    if (!value || typeof value !== 'object') return false;
+    if (!value || typeof value !== "object") return false;
     const obj = value as Record<string, unknown>;
     return (
-        typeof obj.lamports === 'number' &&
-        typeof obj.owner === 'string' &&
-        typeof obj.executable === 'boolean' &&
-        typeof obj.rentEpoch === 'number' &&
-        typeof obj.dataLength === 'number'
+        typeof obj.lamports === "number" &&
+        typeof obj.owner === "string" &&
+        typeof obj.executable === "boolean" &&
+        typeof obj.rentEpoch === "number" &&
+        typeof obj.dataLength === "number"
     );
 }
 
@@ -49,7 +49,7 @@ export function isAccountInfoResult(value: unknown): value is AccountInfoResult 
  * Type guard for BalanceResult
  */
 export function isBalanceResult(value: unknown): value is BalanceResult {
-    if (!value || typeof value !== 'object') return false;
+    if (!value || typeof value !== "object") return false;
     const obj = value as Record<string, unknown>;
-    return typeof obj.lamports === 'number';
+    return typeof obj.lamports === "number";
 }

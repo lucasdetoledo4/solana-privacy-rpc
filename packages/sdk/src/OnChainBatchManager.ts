@@ -16,12 +16,7 @@ import axios, { AxiosInstance } from "axios";
 import { CoordinatorClient } from "./coordinator";
 import { hashQuery, hashBatch } from "./utils";
 import { RpcMethod } from "./enums";
-import {
-    BatchRequest,
-    BatchResponse,
-    PendingQuery,
-    Query,
-} from "./types";
+import { BatchRequest, BatchResponse, PendingQuery, Query } from "./types";
 
 export interface OnChainConfig {
     /** URL of the privacy proxy server */
@@ -74,10 +69,7 @@ export class OnChainBatchManager {
             pollInterval: config.pollInterval ?? 2000,
         };
 
-        this.coordinator = new CoordinatorClient(
-            config.connection,
-            config.coordinatorProgramId
-        );
+        this.coordinator = new CoordinatorClient(config.connection, config.coordinatorProgramId);
 
         this.httpClient = axios.create({
             baseURL: config.proxyEndpoint,
@@ -89,11 +81,7 @@ export class OnChainBatchManager {
     /**
      * Add a query - submits hash on-chain and returns promise for result
      */
-    async addQuery<T>(
-        method: RpcMethod,
-        pubkey: string,
-        commitment?: string
-    ): Promise<T> {
+    async addQuery<T>(method: RpcMethod, pubkey: string, commitment?: string): Promise<T> {
         const query: Query = {
             id: crypto.randomUUID(),
             method,
@@ -119,9 +107,7 @@ export class OnChainBatchManager {
                 this.startProcessingLoop();
             } catch (error) {
                 // Remove from queue on failure
-                this.queuedQueries = this.queuedQueries.filter(
-                    (q) => q.id !== query.id
-                );
+                this.queuedQueries = this.queuedQueries.filter((q) => q.id !== query.id);
                 reject(error);
             }
         });
@@ -148,9 +134,7 @@ export class OnChainBatchManager {
             );
 
             const tx = new Transaction().add(createIx);
-            await sendAndConfirmTransaction(this.config.connection, tx, [
-                this.config.wallet,
-            ]);
+            await sendAndConfirmTransaction(this.config.connection, tx, [this.config.wallet]);
         }
 
         this.currentBatchId = batchId;
@@ -163,9 +147,7 @@ export class OnChainBatchManager {
         );
 
         const tx = new Transaction().add(submitIx);
-        await sendAndConfirmTransaction(this.config.connection, tx, [
-            this.config.wallet,
-        ]);
+        await sendAndConfirmTransaction(this.config.connection, tx, [this.config.wallet]);
     }
 
     /**
@@ -223,9 +205,7 @@ export class OnChainBatchManager {
     private async finalizeBatch(batchId: bigint): Promise<void> {
         const finalizeIx = this.coordinator.createFinalizeBatchInstruction(batchId);
         const tx = new Transaction().add(finalizeIx);
-        await sendAndConfirmTransaction(this.config.connection, tx, [
-            this.config.wallet,
-        ]);
+        await sendAndConfirmTransaction(this.config.connection, tx, [this.config.wallet]);
     }
 
     /**
@@ -251,10 +231,7 @@ export class OnChainBatchManager {
         };
 
         try {
-            const response = await this.httpClient.post<BatchResponse>(
-                "/execute-batch",
-                request
-            );
+            const response = await this.httpClient.post<BatchResponse>("/execute-batch", request);
 
             // Map results
             const resultMap = new Map<string, BatchResponse["results"][0]>();
@@ -279,9 +256,7 @@ export class OnChainBatchManager {
             await this.completeBatch(batchId, resultsHash);
         } catch (error) {
             for (const query of queries) {
-                query.reject(
-                    error instanceof Error ? error : new Error("Batch execution failed")
-                );
+                query.reject(error instanceof Error ? error : new Error("Batch execution failed"));
             }
         }
     }
@@ -289,19 +264,14 @@ export class OnChainBatchManager {
     /**
      * Mark batch complete on-chain
      */
-    private async completeBatch(
-        batchId: bigint,
-        resultsHash: Uint8Array
-    ): Promise<void> {
+    private async completeBatch(batchId: bigint, resultsHash: Uint8Array): Promise<void> {
         const completeIx = this.coordinator.createCompleteBatchInstruction(
             batchId,
             resultsHash,
             this.config.wallet.publicKey
         );
         const tx = new Transaction().add(completeIx);
-        await sendAndConfirmTransaction(this.config.connection, tx, [
-            this.config.wallet,
-        ]);
+        await sendAndConfirmTransaction(this.config.connection, tx, [this.config.wallet]);
     }
 
     private sleep(ms: number): Promise<void> {

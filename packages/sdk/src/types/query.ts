@@ -2,8 +2,8 @@
  * Query types for the Privacy RPC SDK
  */
 
-import { Commitment } from '@solana/web3.js';
-import { RpcMethod } from '../enums';
+import { Commitment } from "@solana/web3.js";
+import { RpcMethod } from "../enums";
 
 /**
  * A single query to be batched

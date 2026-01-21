@@ -4,11 +4,11 @@
  */
 export enum CommitmentLevel {
     /** Query the most recent block which has reached 1 confirmation */
-    Processed = 'processed',
+    Processed = "processed",
     /** Query the most recent block which has reached 1 confirmation by a supermajority of the cluster */
-    Confirmed = 'confirmed',
+    Confirmed = "confirmed",
     /** Query the most recent block which has been finalized by a supermajority of the cluster */
-    Finalized = 'finalized',
+    Finalized = "finalized",
 }
 
 /**

@@ -5,9 +5,9 @@
  * and k-anonymity enforcement.
  */
 
-import axios, { AxiosInstance } from 'axios';
-import { generateQueryId, hashBatch } from './utils';
-import { RpcMethod } from './enums';
+import axios, { AxiosInstance } from "axios";
+import { generateQueryId, hashBatch } from "./utils";
+import { RpcMethod } from "./enums";
 import {
     BatchRequest,
     BatchResponse,
@@ -16,7 +16,7 @@ import {
     Query,
     ResolvedPrivacyConfig,
     resolveConfig,
-} from './types';
+} from "./types";
 
 /**
  * Manages batching of queries for privacy-preserving execution
@@ -34,7 +34,7 @@ export class BatchManager {
      */
     constructor(config: PrivacyConfig) {
         if (!config.proxyEndpoint) {
-            throw new Error('PrivacyConfig.proxyEndpoint is required');
+            throw new Error("PrivacyConfig.proxyEndpoint is required");
         }
 
         this.config = resolveConfig(config);
@@ -43,7 +43,7 @@ export class BatchManager {
             baseURL: this.config.proxyEndpoint,
             timeout: this.config.timeout,
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         });
     }
@@ -62,7 +62,7 @@ export class BatchManager {
                 id: generateQueryId(),
                 method,
                 pubkey,
-                commitment: commitment as PendingQuery['commitment'],
+                commitment: commitment as PendingQuery["commitment"],
                 resolve: resolve as (value: unknown) => void,
                 reject,
             };
@@ -131,13 +131,10 @@ export class BatchManager {
         };
 
         try {
-            const response = await this.httpClient.post<BatchResponse>(
-                '/execute-batch',
-                request
-            );
+            const response = await this.httpClient.post<BatchResponse>("/execute-batch", request);
 
             // Map results back to their queries
-            const resultMap = new Map<string, BatchResponse['results'][0]>();
+            const resultMap = new Map<string, BatchResponse["results"][0]>();
             for (const result of response.data.results) {
                 resultMap.set(result.id, result);
             }
@@ -151,13 +148,12 @@ export class BatchManager {
                 } else if (result.success) {
                     query.resolve(result.data);
                 } else {
-                    query.reject(new Error(result.error ?? 'Query failed'));
+                    query.reject(new Error(result.error ?? "Query failed"));
                 }
             }
         } catch (error) {
             // Reject all queries on batch failure
-            const errorMessage =
-                error instanceof Error ? error.message : 'Batch execution failed';
+            const errorMessage = error instanceof Error ? error.message : "Batch execution failed";
 
             for (const query of queries) {
                 query.reject(new Error(errorMessage));
@@ -189,7 +185,7 @@ export class BatchManager {
 
         // Reject any remaining queries
         for (const query of this.pendingQueries) {
-            query.reject(new Error('BatchManager destroyed'));
+            query.reject(new Error("BatchManager destroyed"));
         }
         this.pendingQueries = [];
     }
