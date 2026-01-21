@@ -9,6 +9,8 @@
 // Main exports
 export { PrivateConnection } from "./PrivateConnection";
 export { BatchManager } from "./BatchManager";
+export { OnChainBatchManager } from "./OnChainBatchManager";
+export type { OnChainConfig } from "./OnChainBatchManager";
 
 // Enum exports
 export {

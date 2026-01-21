@@ -2,7 +2,7 @@
 //!
 //! This module configures the Axum web server with all routes and middleware.
 
-use crate::coordinator::BatchPoller;
+use crate::coordinator::{BatchPoller, CoordinatorReader};
 use crate::executor::BatchExecutor;
 use crate::handlers::{execute_batch, health_check, AppState};
 use crate::types::ProxyConfig;
@@ -18,8 +18,16 @@ const DEFAULT_POLL_INTERVAL_MS: u64 = 5000;
 
 /// Start the HTTP server
 pub async fn run(config: ProxyConfig) -> Result<(), Box<dyn std::error::Error>> {
+    // Create coordinator reader if on-chain verification is enabled
+    let coordinator = if config.enable_poller {
+        Some(CoordinatorReader::new(&config.rpc_url))
+    } else {
+        None
+    };
+
     let state = Arc::new(AppState {
         executor: BatchExecutor::new(&config.rpc_url),
+        coordinator,
     });
 
     // Start batch poller if enabled

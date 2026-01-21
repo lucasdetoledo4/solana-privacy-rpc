@@ -21,13 +21,29 @@ pub struct BatchResponse {
 
     /// Number of queries that failed
     pub failed_count: usize,
+
+    /// Hash of the results batch
+    pub batch_hash: String,
 }
 
 impl BatchResponse {
     /// Create a new batch response from results
     pub fn from_results(results: Vec<QueryResult>, execution_time_ms: u64) -> Self {
+        use sha2::{Digest, Sha256};
+
         let succeeded_count = results.iter().filter(|r| r.success).count();
         let failed_count = results.len() - succeeded_count;
+
+        // Compute hash of results
+        let mut hasher = Sha256::new();
+        for result in &results {
+            hasher.update(result.id.as_bytes());
+            hasher.update(if result.success { b"1" } else { b"0" });
+            if let Some(data) = &result.data {
+                hasher.update(data.to_string().as_bytes());
+            }
+        }
+        let batch_hash = hex::encode(hasher.finalize());
 
         Self {
             success: failed_count == 0,
@@ -35,6 +51,7 @@ impl BatchResponse {
             execution_time_ms,
             succeeded_count,
             failed_count,
+            batch_hash,
         }
     }
 }
@@ -56,6 +73,7 @@ mod tests {
         assert_eq!(response.succeeded_count, 2);
         assert_eq!(response.failed_count, 0);
         assert_eq!(response.execution_time_ms, 50);
+        assert!(!response.batch_hash.is_empty());
     }
 
     #[test]
@@ -70,6 +88,7 @@ mod tests {
         assert!(!response.success);
         assert_eq!(response.succeeded_count, 1);
         assert_eq!(response.failed_count, 1);
+        assert!(!response.batch_hash.is_empty());
     }
 
     #[test]
@@ -79,5 +98,6 @@ mod tests {
         assert!(response.success);
         assert_eq!(response.succeeded_count, 0);
         assert_eq!(response.failed_count, 0);
+        assert!(!response.batch_hash.is_empty());
     }
 }

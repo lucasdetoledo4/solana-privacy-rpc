@@ -30,6 +30,9 @@ export interface BatchRequest {
 
     /** SHA-256 hash of the batch for verification */
     batchHash?: string;
+
+    /** On-chain batch ID (for coordinated batches) */
+    batchId?: string;
 }
 
 /**
@@ -50,6 +53,9 @@ export interface BatchResponse {
 
     /** Number of queries that failed */
     failedCount: number;
+
+    /** Hash of the results batch */
+    batchHash: string;
 }
 
 /**

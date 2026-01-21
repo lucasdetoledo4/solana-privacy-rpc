@@ -156,6 +156,28 @@ export class CoordinatorClient {
         return finalized;
     }
 
+    createBatchInstruction(
+        batchId: bigint,
+        payer: PublicKey
+    ): TransactionInstruction {
+        const [coordinatorState] = this.getCoordinatorStatePda();
+        const [batch] = this.getBatchPda(batchId);
+
+        // Instruction discriminator for create_batch (anchor sighash)
+        const discriminator = Buffer.from([251, 20, 5, 66, 184, 108, 64, 220]);
+
+        return new TransactionInstruction({
+            keys: [
+                { pubkey: coordinatorState, isSigner: false, isWritable: true },
+                { pubkey: batch, isSigner: false, isWritable: true },
+                { pubkey: payer, isSigner: true, isWritable: true },
+                { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+            ],
+            programId: this.programId,
+            data: discriminator,
+        });
+    }
+
     createSubmitQueryInstruction(
         batchId: bigint,
         queryHash: Uint8Array,

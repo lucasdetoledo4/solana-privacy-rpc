@@ -1,5 +1,6 @@
 //! Health check handler
 
+use crate::coordinator::CoordinatorReader;
 use crate::executor::BatchExecutor;
 use crate::types::HealthResponse;
 use axum::{extract::State, Json};
@@ -8,6 +9,7 @@ use std::sync::Arc;
 /// Shared application state
 pub struct AppState {
     pub executor: BatchExecutor,
+    pub coordinator: Option<CoordinatorReader>,
 }
 
 /// Health check endpoint

@@ -13,6 +13,10 @@ pub struct BatchRequest {
     /// SHA-256 hash of the batch for verification
     #[serde(default)]
     pub batch_hash: Option<String>,
+
+    /// On-chain batch ID (for coordinated batches)
+    #[serde(default)]
+    pub batch_id: Option<String>,
 }
 
 impl BatchRequest {
@@ -21,6 +25,7 @@ impl BatchRequest {
         Self {
             queries,
             batch_hash: None,
+            batch_id: None,
         }
     }
 
