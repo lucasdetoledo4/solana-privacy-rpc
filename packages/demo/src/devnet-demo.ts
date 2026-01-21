@@ -48,11 +48,23 @@ function loadWallet(): Keypair {
     return Keypair.generate();
 }
 
-// Demo wallets to query
+// Demo wallets to query - cycle through these
 const DEMO_WALLETS = [
-    { name: "Wallet A", pubkey: "GK2zqSsXLA2rwVZk347RYhh6jJpRsCA69FjLW93ZGi3B" },
-    { name: "Wallet B", pubkey: "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG" },
+    { name: "Solana Foundation", pubkey: "GK2zqSsXLA2rwVZk347RYhh6jJpRsCA69FjLW93ZGi3B" },
+    { name: "Phantom Treasury", pubkey: "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG" },
+    { name: "Marinade Finance", pubkey: "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S" },
+    { name: "Jupiter Exchange", pubkey: "JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB" },
+    { name: "Raydium", pubkey: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1" },
+    { name: "Magic Eden", pubkey: "GUfCR9mK6azb9vcpsxgXyj7XRPAKJd4KMHTTVvtncGgp" },
+    { name: "Tensor", pubkey: "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN" },
+    { name: "Drift Protocol", pubkey: "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH" },
 ];
+
+// Pick a random wallet to avoid duplicate query errors
+function getRandomWallet() {
+    const index = Math.floor(Math.random() * DEMO_WALLETS.length);
+    return DEMO_WALLETS[index];
+}
 
 function printStep(step: number, total: number, message: string) {
     console.log(chalk.cyan(`\n[${step}/${total}] `) + chalk.white(message));
@@ -179,40 +191,57 @@ export async function runDevnetDemo(proxyUrl: string) {
 
     console.log(chalk.green("     ✓ Manager initialized"));
 
-    // Step 4: Submit query
-    printStep(4, totalSteps, "Submitting query (hash goes on-chain)");
+    // Step 4: Submit k queries (simulating multiple users)
+    printStep(4, totalSteps, `Submitting ${state.minBatchSize} queries (simulating k users)`);
 
-    const targetWallet = DEMO_WALLETS[0];
-    console.log(chalk.dim(`     Querying balance of: ${targetWallet.name}`));
-    console.log(chalk.dim(`     Pubkey: ${targetWallet.pubkey}`));
+    console.log(chalk.dim(`     In production, each query comes from a different user.`));
+    console.log(chalk.dim(`     For demo, we simulate ${state.minBatchSize} users.\n`));
 
-    const querySpinner = ora("Submitting query hash to on-chain coordinator...").start();
+    // Pick k unique random wallets
+    const shuffled = [...DEMO_WALLETS].sort(() => Math.random() - 0.5);
+    const selectedWallets = shuffled.slice(0, state.minBatchSize);
+
+    const querySpinner = ora("Submitting query hashes to on-chain coordinator...").start();
 
     try {
-        const balancePromise = batchManager.addQuery<number>(
-            RpcMethod.GetBalance,
-            targetWallet.pubkey
-        );
+        // Submit all k queries
+        const promises: Promise<number>[] = [];
 
-        querySpinner.text = "Query submitted, waiting for batch to fill...";
+        for (let i = 0; i < selectedWallets.length; i++) {
+            const wallet_target = selectedWallets[i];
+            querySpinner.text = `Submitting query ${i + 1}/${state.minBatchSize}: ${wallet_target.name}...`;
 
-        // Step 5: Wait for result
-        printStep(5, totalSteps, "Waiting for batch finalization");
+            const promise = batchManager.addQuery<number>(RpcMethod.GetBalance, wallet_target.pubkey);
+            promises.push(promise);
 
-        console.log(chalk.dim("     Batch needs k queries from different users."));
-        console.log(chalk.dim("     In production, other users would submit queries."));
-        console.log(chalk.dim("     For demo, we wait for timeout or manual finalization.\n"));
+            // Small delay between submissions
+            await new Promise((r) => setTimeout(r, 500));
+        }
 
-        const balance = await balancePromise;
-        querySpinner.succeed("Query executed!");
+        querySpinner.text = `All ${state.minBatchSize} queries submitted. Waiting for batch finalization...`;
 
-        // Step 6: Show result
-        printStep(6, totalSteps, "Result received");
+        // Step 5: Wait for results
+        printStep(5, totalSteps, "Waiting for batch finalization and execution");
 
-        const solBalance = balance / LAMPORTS_PER_SOL;
-        console.log(
-            chalk.green(`\n     ✓ ${targetWallet.name} balance: ${solBalance.toFixed(4)} SOL\n`)
-        );
+        console.log(chalk.dim("     Batch will auto-finalize when k queries are reached."));
+        console.log(chalk.dim("     Then proxy executes all queries together.\n"));
+
+        const results = await Promise.all(promises);
+        querySpinner.succeed("Batch executed successfully!");
+
+        // Step 6: Show results
+        printStep(6, totalSteps, "Results received");
+
+        console.log(chalk.dim("\n     Each user receives ONLY their own result:\n"));
+
+        for (let i = 0; i < selectedWallets.length; i++) {
+            const solBalance = results[i] / LAMPORTS_PER_SOL;
+            console.log(
+                chalk.green(`     ✓ User ${i + 1} (${selectedWallets[i].name}): `) +
+                    chalk.white(`${solBalance.toFixed(4)} SOL`)
+            );
+        }
+        console.log("");
     } catch (error) {
         querySpinner.fail("Query failed");
         console.log(
