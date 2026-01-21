@@ -8,6 +8,9 @@ skip-lint = false
 [programs.localnet]
 coordinator = "3LsgXZDcRaC3vGq3392WGuEa4AST76m8NPNQCaqDd3n6"
 
+[programs.devnet]
+coordinator = "3LsgXZDcRaC3vGq3392WGuEa4AST76m8NPNQCaqDd3n6"
+
 [registry]
 url = "https://api.apr.dev"
 
