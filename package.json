@@ -13,7 +13,8 @@
     "format:check": "prettier --check \"**/*.{ts,js}\"",
     "demo": "yarn workspace @privacy-rpc/demo dev",
     "demo:local": "yarn workspace @privacy-rpc/demo demo:local",
-    "demo:explain": "yarn workspace @privacy-rpc/demo dev explain"
+    "demo:devnet": "yarn workspace @privacy-rpc/demo demo:devnet",
+    "demo:explain": "yarn workspace @privacy-rpc/demo demo:explain"
   },
   "devDependencies": {
     "prettier": "^3.8.0"

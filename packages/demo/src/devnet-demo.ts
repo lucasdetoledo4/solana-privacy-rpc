@@ -2,8 +2,37 @@ import chalk from "chalk";
 import ora from "ora";
 import { Connection, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { OnChainBatchManager, RpcMethod, CoordinatorClient } from "@privacy-rpc/sdk";
+import * as fs from "fs";
+import * as path from "path";
 
 const DEVNET_URL = "https://api.devnet.solana.com";
+
+function loadWallet(): Keypair {
+    // Try loading from default Solana CLI keyfile first
+    const keyfilePath =
+        process.env.SOLANA_KEYFILE || path.join(process.env.HOME || "", ".config/solana/id.json");
+    if (fs.existsSync(keyfilePath)) {
+        const keyData = JSON.parse(fs.readFileSync(keyfilePath, "utf-8"));
+        return Keypair.fromSecretKey(Uint8Array.from(keyData));
+    }
+
+    // Try environment variable (JSON array format)
+    const envKey = process.env.SOLANA_PRIVATE_KEY;
+    if (envKey) {
+        try {
+            const parsed = JSON.parse(envKey);
+            if (Array.isArray(parsed)) {
+                return Keypair.fromSecretKey(Uint8Array.from(parsed));
+            }
+        } catch {
+            // If not JSON, assume it's already a Uint8Array-compatible format
+            console.log(chalk.yellow("Warning: Could not parse SOLANA_PRIVATE_KEY"));
+        }
+    }
+
+    // Generate new keypair as fallback
+    return Keypair.generate();
+}
 
 // Demo wallets to query
 const DEMO_WALLETS = [
@@ -36,27 +65,56 @@ export async function runDevnetDemo(proxyUrl: string) {
     printStep(1, totalSteps, "Setting up connection and wallet");
 
     const connection = new Connection(DEVNET_URL, "confirmed");
-    const wallet = Keypair.generate();
+    const wallet = loadWallet();
+    const isPreloaded =
+        process.env.SOLANA_PRIVATE_KEY ||
+        require("fs").existsSync(
+            process.env.SOLANA_KEYFILE ||
+                require("path").join(process.env.HOME || "", ".config/solana/id.json")
+        );
 
     console.log(chalk.dim(`     Devnet RPC: ${DEVNET_URL}`));
-    console.log(chalk.dim(`     Demo wallet: ${wallet.publicKey.toBase58().slice(0, 16)}...`));
+    console.log(chalk.dim(`     Wallet: ${wallet.publicKey.toBase58().slice(0, 16)}...`));
+    console.log(
+        chalk.dim(`     Source: ${isPreloaded ? "pre-funded wallet" : "generated (needs airdrop)"}`)
+    );
 
-    // Request airdrop
-    const spinner = ora("Requesting devnet airdrop...").start();
+    // Check balance
+    const balance = await connection.getBalance(wallet.publicKey);
+    console.log(chalk.dim(`     Balance: ${(balance / LAMPORTS_PER_SOL).toFixed(4)} SOL`));
 
-    try {
-        const sig = await connection.requestAirdrop(wallet.publicKey, LAMPORTS_PER_SOL);
-        await connection.confirmTransaction(sig);
-        spinner.succeed("Received 1 SOL from devnet faucet");
-    } catch (error) {
-        spinner.fail("Airdrop failed (rate limited or devnet down)");
-        console.log(chalk.yellow("\n     Try again later or use a pre-funded wallet.\n"));
+    if (balance < 0.01 * LAMPORTS_PER_SOL) {
+        // Request airdrop if balance is low
+        const spinner = ora("Requesting devnet airdrop...").start();
 
-        // Continue with explanation even if airdrop fails
-        console.log(chalk.cyan("\n────────────────────────────────────────────────────────────"));
-        console.log(chalk.white("\nHere's what would happen with a funded wallet:\n"));
-        printDevnetFlow();
-        return;
+        try {
+            const sig = await connection.requestAirdrop(wallet.publicKey, LAMPORTS_PER_SOL);
+            await connection.confirmTransaction(sig);
+            spinner.succeed("Received 1 SOL from devnet faucet");
+        } catch (error) {
+            spinner.fail("Airdrop failed (rate limited or devnet down)");
+            console.log(chalk.yellow("\n     Options:"));
+            console.log(chalk.dim("       1. Set SOLANA_PRIVATE_KEY env var with a funded wallet"));
+            console.log(
+                chalk.dim("       2. Use default Solana CLI wallet (~/.config/solana/id.json)")
+            );
+            console.log(chalk.dim("       3. Fund this wallet: " + wallet.publicKey.toBase58()));
+            console.log(
+                chalk.dim(
+                    "          solana airdrop 1 " + wallet.publicKey.toBase58() + " --url devnet\n"
+                )
+            );
+
+            // Continue with explanation
+            console.log(
+                chalk.cyan("\n────────────────────────────────────────────────────────────")
+            );
+            console.log(chalk.white("\nHere's what would happen with a funded wallet:\n"));
+            printDevnetFlow();
+            return;
+        }
+    } else {
+        console.log(chalk.green("     ✓ Wallet has sufficient balance"));
     }
 
     // Step 2: Check coordinator

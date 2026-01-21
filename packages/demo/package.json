@@ -17,6 +17,7 @@
   "dependencies": {
     "@privacy-rpc/sdk": "*",
     "@solana/web3.js": "^1.87.6",
+    "bs58": "^6.0.0",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "ora": "^5.4.1"
