@@ -15,8 +15,11 @@ export interface Query {
     /** The RPC method to execute */
     method: RpcMethod;
 
-    /** Base58-encoded public key to query */
-    pubkey: string;
+    /** Base58-encoded public key to query (for balance/account methods) */
+    pubkey?: string;
+
+    /** Generic params for methods that need different inputs */
+    params?: string | string[];
 
     /** Optional commitment level */
     commitment?: Commitment;

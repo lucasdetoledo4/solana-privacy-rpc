@@ -19,6 +19,7 @@ tower-http = { version = "0.5", features = ["cors"] }
 # Solana
 solana-client = "1.18"
 solana-sdk = "1.18"
+solana-transaction-status = "1.18"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }

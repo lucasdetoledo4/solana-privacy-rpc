@@ -14,6 +14,7 @@ tower-http.workspace = true
 # Solana
 solana-client.workspace = true
 solana-sdk.workspace = true
+solana-transaction-status.workspace = true
 
 # Serialization
 serde.workspace = true

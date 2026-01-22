@@ -12,8 +12,13 @@ pub struct Query {
     /// The RPC method to execute
     pub method: RpcMethod,
 
-    /// Base58-encoded public key to query
-    pub pubkey: String,
+    /// Base58-encoded public key to query (for balance/account methods)
+    #[serde(default)]
+    pub pubkey: Option<String>,
+
+    /// Generic params for methods that need different inputs
+    #[serde(default)]
+    pub params: Option<serde_json::Value>,
 
     /// Optional commitment level (defaults to "confirmed")
     #[serde(default)]
@@ -21,12 +26,24 @@ pub struct Query {
 }
 
 impl Query {
-    /// Create a new query
+    /// Create a new query with pubkey parameter
     pub fn new(id: String, method: RpcMethod, pubkey: String) -> Self {
         Self {
             id,
             method,
-            pubkey,
+            pubkey: Some(pubkey),
+            params: None,
+            commitment: None,
+        }
+    }
+
+    /// Create a new query with generic params
+    pub fn with_params(id: String, method: RpcMethod, params: serde_json::Value) -> Self {
+        Self {
+            id,
+            method,
+            pubkey: None,
+            params: Some(params),
             commitment: None,
         }
     }
@@ -35,6 +52,19 @@ impl Query {
     pub fn with_commitment(mut self, commitment: String) -> Self {
         self.commitment = Some(commitment);
         self
+    }
+
+    /// Get the primary parameter (pubkey or first param)
+    pub fn get_primary_param(&self) -> Option<String> {
+        if let Some(ref pubkey) = self.pubkey {
+            return Some(pubkey.clone());
+        }
+        if let Some(ref params) = self.params {
+            if let Some(s) = params.as_str() {
+                return Some(s.to_string());
+            }
+        }
+        None
     }
 }
 

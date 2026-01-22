@@ -8,10 +8,18 @@
 mod execute_query;
 mod get_account_info;
 mod get_balance;
+mod get_block_height;
+mod get_multiple_accounts;
+mod get_token_account_balance;
+mod get_transaction;
 
 pub use execute_query::execute_single_query;
 pub use get_account_info::execute_get_account_info;
 pub use get_balance::execute_get_balance;
+pub use get_block_height::execute_get_block_height;
+pub use get_multiple_accounts::execute_get_multiple_accounts;
+pub use get_token_account_balance::execute_get_token_account_balance;
+pub use get_transaction::execute_get_transaction;
 
 use crate::error::{ProxyError, ProxyResult};
 use crate::types::{BatchRequest, BatchResponse, QueryResult, MAX_BATCH_SIZE};

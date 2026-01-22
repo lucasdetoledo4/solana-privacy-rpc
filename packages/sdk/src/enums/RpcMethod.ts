@@ -4,6 +4,10 @@
 export enum RpcMethod {
     GetBalance = "getBalance",
     GetAccountInfo = "getAccountInfo",
+    GetTransaction = "getTransaction",
+    GetTokenAccountBalance = "getTokenAccountBalance",
+    GetBlockHeight = "getBlockHeight",
+    GetMultipleAccounts = "getMultipleAccounts",
 }
 
 /**

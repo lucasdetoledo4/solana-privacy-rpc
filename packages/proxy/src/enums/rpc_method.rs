@@ -10,6 +10,14 @@ pub enum RpcMethod {
     GetBalance,
     /// Get account information
     GetAccountInfo,
+    /// Get transaction by signature
+    GetTransaction,
+    /// Get SPL token account balance
+    GetTokenAccountBalance,
+    /// Get current block height
+    GetBlockHeight,
+    /// Get multiple accounts in one query
+    GetMultipleAccounts,
 }
 
 impl RpcMethod {
@@ -18,12 +26,23 @@ impl RpcMethod {
         match self {
             RpcMethod::GetBalance => "getBalance",
             RpcMethod::GetAccountInfo => "getAccountInfo",
+            RpcMethod::GetTransaction => "getTransaction",
+            RpcMethod::GetTokenAccountBalance => "getTokenAccountBalance",
+            RpcMethod::GetBlockHeight => "getBlockHeight",
+            RpcMethod::GetMultipleAccounts => "getMultipleAccounts",
         }
     }
 
     /// Get all supported RPC methods
     pub fn all() -> &'static [RpcMethod] {
-        &[RpcMethod::GetBalance, RpcMethod::GetAccountInfo]
+        &[
+            RpcMethod::GetBalance,
+            RpcMethod::GetAccountInfo,
+            RpcMethod::GetTransaction,
+            RpcMethod::GetTokenAccountBalance,
+            RpcMethod::GetBlockHeight,
+            RpcMethod::GetMultipleAccounts,
+        ]
     }
 
     /// Check if a string is a valid RPC method name
@@ -31,6 +50,10 @@ impl RpcMethod {
         match s {
             "getBalance" => Some(RpcMethod::GetBalance),
             "getAccountInfo" => Some(RpcMethod::GetAccountInfo),
+            "getTransaction" => Some(RpcMethod::GetTransaction),
+            "getTokenAccountBalance" => Some(RpcMethod::GetTokenAccountBalance),
+            "getBlockHeight" => Some(RpcMethod::GetBlockHeight),
+            "getMultipleAccounts" => Some(RpcMethod::GetMultipleAccounts),
             _ => None,
         }
     }
@@ -62,9 +85,13 @@ mod tests {
     #[test]
     fn test_rpc_method_all() {
         let methods = RpcMethod::all();
-        assert_eq!(methods.len(), 2);
+        assert_eq!(methods.len(), 6);
         assert!(methods.contains(&RpcMethod::GetBalance));
         assert!(methods.contains(&RpcMethod::GetAccountInfo));
+        assert!(methods.contains(&RpcMethod::GetTransaction));
+        assert!(methods.contains(&RpcMethod::GetTokenAccountBalance));
+        assert!(methods.contains(&RpcMethod::GetBlockHeight));
+        assert!(methods.contains(&RpcMethod::GetMultipleAccounts));
     }
 
     #[test]
