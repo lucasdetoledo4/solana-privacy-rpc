@@ -211,7 +211,10 @@ export async function runDevnetDemo(proxyUrl: string) {
             const wallet_target = selectedWallets[i];
             querySpinner.text = `Submitting query ${i + 1}/${state.minBatchSize}: ${wallet_target.name}...`;
 
-            const promise = batchManager.addQuery<number>(RpcMethod.GetBalance, wallet_target.pubkey);
+            const promise = batchManager.addQuery<number>(
+                RpcMethod.GetBalance,
+                wallet_target.pubkey
+            );
             promises.push(promise);
 
             // Small delay between submissions
