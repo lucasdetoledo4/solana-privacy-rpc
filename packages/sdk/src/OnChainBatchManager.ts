@@ -18,6 +18,9 @@ import { hashQuery, hashBatch } from "./utils";
 import { RpcMethod } from "./enums";
 import { BatchRequest, BatchResponse, PendingQuery, Query } from "./types";
 
+/**
+ * Configuration for on-chain batch management
+ */
 export interface OnChainConfig {
     /** URL of the privacy proxy server */
     proxyEndpoint: string;
@@ -45,11 +48,30 @@ interface QueuedQuery extends PendingQuery {
 /**
  * Manages batching with on-chain coordination
  *
- * Flow:
+ * This manager provides trustless k-anonymity by coordinating batches
+ * on-chain. Queries from multiple users are batched together, ensuring
+ * that no single party (including the proxy) can link queries to users.
+ *
+ * **Flow:**
  * 1. User adds query → hash submitted on-chain
  * 2. When min queries reached (from any users) → batch finalized
  * 3. SDK sends actual queries to proxy for execution
  * 4. Results returned → batch marked complete on-chain
+ *
+ * @example
+ * ```typescript
+ * const manager = new OnChainBatchManager({
+ *     proxyEndpoint: "http://localhost:3000",
+ *     connection: new Connection("https://api.devnet.solana.com"),
+ *     wallet: Keypair.generate(),
+ * });
+ *
+ * // Query is batched with other users' queries
+ * const balance = await manager.addQuery<number>(
+ *     RpcMethod.GetBalance,
+ *     "So11111111111111111111111111111111111111112"
+ * );
+ * ```
  */
 export class OnChainBatchManager {
     private readonly config: Required<OnChainConfig>;
@@ -60,6 +82,11 @@ export class OnChainBatchManager {
     private isProcessing = false;
     private submitLock: Promise<void> = Promise.resolve();
 
+    /**
+     * Create a new on-chain batch manager
+     *
+     * @param config - Configuration for on-chain coordination
+     */
     constructor(config: OnChainConfig) {
         this.config = {
             proxyEndpoint: config.proxyEndpoint,
@@ -80,8 +107,31 @@ export class OnChainBatchManager {
     }
 
     /**
-     * Add a query - submits hash on-chain and returns promise for result
-     * Uses a lock to serialize on-chain submissions and prevent race conditions
+     * Add a query to be batched with on-chain coordination
+     *
+     * This method:
+     * 1. Hashes the query (SHA-256)
+     * 2. Submits the hash on-chain to the coordinator
+     * 3. Waits for batch to fill and finalize
+     * 4. Returns the result when execution completes
+     *
+     * Uses a lock to serialize on-chain submissions and prevent race conditions.
+     *
+     * @param method - RPC method to call (e.g., RpcMethod.GetBalance)
+     * @param pubkey - Public key to query (as base58 string)
+     * @param commitment - Optional commitment level
+     * @returns Promise that resolves with the query result
+     *
+     * @example
+     * ```typescript
+     * // Get balance with privacy
+     * const balance = await manager.addQuery<number>(
+     *     RpcMethod.GetBalance,
+     *     "So11111111111111111111111111111111111111112",
+     *     "confirmed"
+     * );
+     * console.log(`Balance: ${balance} lamports`);
+     * ```
      */
     async addQuery<T>(method: RpcMethod, pubkey: string, commitment?: string): Promise<T> {
         const query: Query = {
