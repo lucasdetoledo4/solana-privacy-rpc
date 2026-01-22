@@ -235,7 +235,19 @@ export async function runDevnetDemo(proxyUrl: string) {
         console.log(chalk.dim("\n     Each user receives ONLY their own result:\n"));
 
         for (let i = 0; i < selectedWallets.length; i++) {
-            const solBalance = results[i] / LAMPORTS_PER_SOL;
+            const result = results[i];
+            // Handle different response formats (number, object with value, etc.)
+            let lamports: number;
+            if (typeof result === "number") {
+                lamports = result;
+            } else if (result && typeof result === "object" && "value" in result) {
+                lamports = (result as { value: number }).value;
+            } else if (result && typeof result === "object" && "lamports" in result) {
+                lamports = (result as { lamports: number }).lamports;
+            } else {
+                lamports = 0;
+            }
+            const solBalance = lamports / LAMPORTS_PER_SOL;
             console.log(
                 chalk.green(`     ✓ User ${i + 1} (${selectedWallets[i].name}): `) +
                     chalk.white(`${solBalance.toFixed(4)} SOL`)
