@@ -58,6 +58,7 @@ export class OnChainBatchManager {
     private queuedQueries: QueuedQuery[] = [];
     private currentBatchId: bigint | null = null;
     private isProcessing = false;
+    private submitLock: Promise<void> = Promise.resolve();
 
     constructor(config: OnChainConfig) {
         this.config = {
@@ -80,6 +81,7 @@ export class OnChainBatchManager {
 
     /**
      * Add a query - submits hash on-chain and returns promise for result
+     * Uses a lock to serialize on-chain submissions and prevent race conditions
      */
     async addQuery<T>(method: RpcMethod, pubkey: string, commitment?: string): Promise<T> {
         const query: Query = {
@@ -102,52 +104,97 @@ export class OnChainBatchManager {
 
             this.queuedQueries.push(queuedQuery);
 
+            // Use lock to serialize on-chain submissions
+            const previousLock = this.submitLock;
+            let releaseLock: () => void;
+            this.submitLock = new Promise((r) => (releaseLock = r));
+
             try {
+                await previousLock;
                 await this.submitQueryOnChain(queryHash);
                 this.startProcessingLoop();
             } catch (error) {
                 // Remove from queue on failure
                 this.queuedQueries = this.queuedQueries.filter((q) => q.id !== query.id);
                 reject(error);
+            } finally {
+                releaseLock!();
             }
         });
     }
 
     /**
      * Submit query hash to on-chain coordinator
+     * Handles race conditions by combining create + submit in atomic transaction
      */
     private async submitQueryOnChain(queryHash: Uint8Array): Promise<void> {
-        // Find or create pending batch
-        let batchId = await this.coordinator.findPendingBatch();
+        const maxRetries = 3;
 
-        if (batchId === null) {
-            // Create new batch
-            const state = await this.coordinator.getCoordinatorState();
-            if (!state) {
-                throw new Error("Coordinator not initialized");
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                // Find existing pending batch
+                let batchId = await this.coordinator.findPendingBatch();
+
+                if (batchId === null) {
+                    // Create new batch + submit query in single atomic transaction
+                    const state = await this.coordinator.getCoordinatorState();
+                    if (!state) {
+                        throw new Error("Coordinator not initialized");
+                    }
+                    batchId = state.batchCounter;
+
+                    const createIx = this.coordinator.createBatchInstruction(
+                        batchId,
+                        this.config.wallet.publicKey
+                    );
+
+                    const submitIx = this.coordinator.createSubmitQueryInstruction(
+                        batchId,
+                        queryHash,
+                        this.config.wallet.publicKey
+                    );
+
+                    // Combine both instructions in single atomic transaction
+                    const tx = new Transaction().add(createIx).add(submitIx);
+                    await sendAndConfirmTransaction(this.config.connection, tx, [
+                        this.config.wallet,
+                    ]);
+
+                    this.currentBatchId = batchId;
+                    return;
+                }
+
+                this.currentBatchId = batchId;
+
+                // Submit query to existing batch
+                const submitIx = this.coordinator.createSubmitQueryInstruction(
+                    batchId,
+                    queryHash,
+                    this.config.wallet.publicKey
+                );
+
+                const tx = new Transaction().add(submitIx);
+                await sendAndConfirmTransaction(this.config.connection, tx, [this.config.wallet]);
+                return;
+            } catch (error) {
+                const errorMsg = error instanceof Error ? error.message : String(error);
+
+                // Check for ConstraintSeeds error (0x7d6 = 2006) or batch state race conditions
+                const isRaceCondition =
+                    errorMsg.includes("0x7d6") ||
+                    errorMsg.includes("ConstraintSeeds") ||
+                    errorMsg.includes("already in use") ||
+                    errorMsg.includes("0x0"); // Account already exists
+
+                if (isRaceCondition && attempt < maxRetries - 1) {
+                    // Wait and retry with fresh state
+                    await this.sleep(1000 * (attempt + 1));
+                    continue;
+                }
+
+                throw error;
             }
-            batchId = state.batchCounter;
-
-            const createIx = this.coordinator.createBatchInstruction(
-                batchId,
-                this.config.wallet.publicKey
-            );
-
-            const tx = new Transaction().add(createIx);
-            await sendAndConfirmTransaction(this.config.connection, tx, [this.config.wallet]);
         }
-
-        this.currentBatchId = batchId;
-
-        // Submit query to batch
-        const submitIx = this.coordinator.createSubmitQueryInstruction(
-            batchId,
-            queryHash,
-            this.config.wallet.publicKey
-        );
-
-        const tx = new Transaction().add(submitIx);
-        await sendAndConfirmTransaction(this.config.connection, tx, [this.config.wallet]);
     }
 
     /**

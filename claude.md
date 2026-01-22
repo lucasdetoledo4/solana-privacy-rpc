@@ -249,3 +249,17 @@ Every file should be:
 - Clean enough to maintain long-term
 
 **Remember: Quality over quantity. A polished Milestone 1 beats a rushed Milestone 3.**
+
+---
+
+## GIT COMMIT GUIDELINES
+
+### Commit Message Format
+- Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
+- Keep first line under 72 characters
+- Add detailed description in body if needed
+
+### Important Rules
+- **DO NOT include `Co-Authored-By` lines** in commit messages
+- Keep commits focused and atomic
+- Write clear, descriptive commit messages
